@@ -1,0 +1,5 @@
+rlink
+=====
+
+Toolkit for connecting two devices in various ways, like over the internet.
+Comes as a C library. The 'r' is for 'rose', in reference to mini-rose.
