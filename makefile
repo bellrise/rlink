@@ -1,13 +1,13 @@
-OBJECTS := $(patsubst %.c,%.o,$(wildcard src/*.c))
-HEADERS := $(wildcard include/rlink/*.h)
-CFLAGS 	:= -Wall -Wextra -Iinclude -ggdb -fsanitize=address
-LIBS 	:= -lssl -lcrypto
+objects := $(patsubst %.c,%.o,$(wildcard src/*.c))
+headers := $(wildcard include/rlink/*.h)
+cflags 	:= -Wall -Wextra -Iinclude -ggdb -fsanitize=address
+libs 	:= -lssl -lcrypto
 
-tls-curl: $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(LIBS)
+librlink.a: $(objects)
+	$(AR) rs $@ $(objects)
 
-%.o: %.c $(HEADERS)
-	$(CC) $(CFLAGS) -c -o $@ $<
+%.o: %.c $(headers)
+	$(CC) $(cflags) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS)
+	rm -f $(objects)

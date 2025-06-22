@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int http_close(struct rlink *_self)
+static int http_close(struct rlink __rl_unused *_self)
 {
         return 0;
 }
