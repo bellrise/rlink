@@ -19,10 +19,11 @@
 #endif
 
 /* Layer types. */
-#define RLT_TCP  401
-#define RLT_UDP  402
-#define RLT_TLS  501
-#define RLT_HTTP 601
+#define RLT_TCP         401
+#define RLT_UDP         402
+#define RLT_SOCK_STREAM 403
+#define RLT_TLS         501
+#define RLT_HTTP        601
 
 /* Layer flags. */
 #define RLF_STREAM 1 /* Implements rl_stream_read+write */
@@ -55,9 +56,10 @@ int rlink_ipv4_resolve(struct in_addr *a, const char *address);
 
 #define rlink_of(LAYER)             ((LAYER)->_self)
 #define rlink_has_flag(RLINK, FLAG) ((RLINK)->rl_flags & (FLAG))
+#define rlink_as_http(RLINK)        ((struct rlink_http *) (RLINK))
+#define rlink_as_sock_stream(RLINK) ((struct rlink_sock_stream *) (RLINK))
 #define rlink_as_tcp(RLINK)         ((struct rlink_tcp *) (RLINK))
 #define rlink_as_tls(RLINK)         ((struct rlink_tls *) (RLINK))
-#define rlink_as_http(RLINK)        ((struct rlink_http *) (RLINK))
 
 /* Generic vector. */
 struct rlink_vec
@@ -80,6 +82,21 @@ struct rlink_tcp
 /* Connect to a peer via TCP over IPv4. `addr` can be an IPv4 address, or a
    domain name that gets resolved to an A record. TCP provides STREAM+TFD */
 int rlink_tcp(struct rlink_tcp *, const char *addr_or_domain, int port);
+
+/* === SOCK_STREAM === */
+
+struct rlink_sock_stream
+{
+        struct rlink _self;
+        int rs_sock;
+        int rs_autoclose;
+};
+
+/* Create a layer over the stream socket, anything with a stream-like read/write
+   interface will do. `auto_close` set to 1 will close the underlying socket
+   when the upper layer is closed. */
+int rlink_sock_stream(struct rlink_sock_stream *, int stream_sock,
+                      int auto_close);
 
 /* === TLS === */
 
