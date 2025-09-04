@@ -93,34 +93,3 @@ int rlink_tls_client(struct rlink_tls *self, struct rlink *over_layer)
 
         return 0;
 }
-
-#if 0
-int main(int argc, char **argv)
-{
-        ssl = SSL_new(ssl_context);
-        if (!ssl)
-                die("Failed to initialize SSL");
-
-        server = connect_to_server(argv[1]);
-        SSL_set_fd(ssl, server);
-
-        struct stopwatch w;
-        stopwatch_start(&w);
-
-        err = SSL_connect(ssl);
-        if (err != 1) {
-                die("Could not establish TLS connection: %s",
-                    SSL_get_error(ssl, err));
-        }
-
-        stopwatch_click(&w);
-        printf("Handshake took %ld ms\n", w.sw_ms);
-
-        read_cert(ssl);
-        send_http(ssl, argv[1]);
-
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        SSL_CTX_free(ssl_context);
-}
-#endif

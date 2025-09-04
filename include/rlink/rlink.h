@@ -59,6 +59,15 @@ int rlink_ipv4_resolve(struct in_addr *a, const char *address);
 #define rlink_as_tls(RLINK)         ((struct rlink_tls *) (RLINK))
 #define rlink_as_http(RLINK)        ((struct rlink_http *) (RLINK))
 
+/* Generic vector. */
+struct rlink_vec
+{
+        void **elems;
+        int size;
+};
+
+int rlink_vec_put(struct rlink_vec *, void *p);
+
 /* === TCP === */
 
 struct rlink_tcp
@@ -125,14 +134,5 @@ int rlink_http_gethdr(struct rlink_http *self, struct rlink_http_hdr *);
 /* Get single header-value pairs from stream until they run out, storing them
    in the vector, which needs to be freed by hand. */
 int rlink_http_recvhdrs(struct rlink_http *self, struct rlink_vec *);
-
-/* Generic vector. */
-struct rlink_vec
-{
-        void **elems;
-        int size;
-};
-
-int rlink_vec_put(struct rlink_vec *, void *p);
 
 #endif /* RLINK_H */
