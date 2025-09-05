@@ -164,8 +164,10 @@ int rlink_http_gethdr(struct rlink_http *self, struct rlink_http_hdr *hdr)
 
         hdr->hdr = strdup(line);
         p = strchr(hdr->hdr, ':');
-        if (!p)
+        if (!p) {
+                free(hdr->hdr);
                 return EPROTO;
+        }
 
         *(p++) = 0;
         hdr->val = lstrip(p);
