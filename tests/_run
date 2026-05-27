@@ -1,0 +1,24 @@
+#!/usr/bin/python3
+
+import subprocess
+import os
+
+failed = 0
+passed = 0
+
+for test in os.listdir('tests/'):
+    if test.startswith('_') or test.startswith('.'):
+        continue
+    res = subprocess.run([f"tests/{test}/test"],
+                         capture_output=True, text=True)
+    if res.returncode != 0:
+        print(f"\033[1;31m→ {test}\033[m")
+        err_lines = ["", *res.stderr.splitlines(keepends=False), ""]
+        for line in err_lines:
+            print(f"  \033[2m| {line}\033[m")
+        failed += 1
+    else:
+        print(f"\033[1m→ {test}\033[m")
+        passed += 1
+
+print(f"\nPassed {passed}, failed {failed} test(s).\n")

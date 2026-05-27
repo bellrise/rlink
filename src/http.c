@@ -48,14 +48,18 @@ int rlink_http_putver(struct rlink_http *self, const char *method,
 {
         struct rlink *link = self->_self.rl_under;
         char *line;
+        int err;
         int len;
 
         len = asprintf(&line, "%s %s %s\r\n", method, path, self->http_ver);
         if (len < 0)
                 return ENOMEM;
 
-        if (rlink_write_exact(link, line, len) < len)
-                return errno;
+        if (rlink_write_exact(link, line, len) < len) {
+                err = errno;
+                free(line);
+                return err;
+        }
 
         free(line);
         return 0;
@@ -65,14 +69,18 @@ int rlink_http_puthdr(struct rlink_http *self, const char *hdr, const char *val)
 {
         struct rlink *link = self->_self.rl_under;
         char *line;
+        int err;
         int len;
 
         len = asprintf(&line, "%s: %s\r\n", hdr, val);
         if (len < 0)
                 return ENOMEM;
 
-        if (rlink_write_exact(link, line, len) < len)
-                return errno;
+        if (rlink_write_exact(link, line, len) < len) {
+                err = errno;
+                free(line);
+                return err;
+        }
 
         free(line);
         return 0;
