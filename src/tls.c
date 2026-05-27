@@ -40,15 +40,22 @@ static int tls_open(struct rlink *_self)
         SSL_CTX_set_min_proto_version(ssl_context, TLS1_2_VERSION);
 
         ssl = SSL_new(ssl_context);
-        if (!ssl)
+        if (!ssl) {
+                SSL_CTX_free(ssl_context);
                 return EPERM;
+        }
 
-        if (!SSL_set_fd(ssl, _self->rl_under->rl_fd(_self->rl_under)))
+        if (!SSL_set_fd(ssl, _self->rl_under->rl_fd(_self->rl_under))) {
+                SSL_CTX_free(ssl_context);
+                SSL_free(ssl);
                 return EBADFD;
+        }
 
         err = SSL_connect(ssl);
         if (err != 1) {
                 rlink_debug("rlink-ssl: %s\n", ERR_error_string(err, NULL));
+                SSL_CTX_free(ssl_context);
+                SSL_free(ssl);
                 return EBADE;
         }
 
@@ -88,8 +95,10 @@ int rlink_tls_client(struct rlink_tls *self, struct rlink *over_layer)
         _self->rl_under = over_layer;
 
         self->internal = malloc(sizeof(struct tls_internal));
-        if ((err = tls_open(&rlink_of(self))))
+        if ((err = tls_open(&rlink_of(self)))) {
+                free(self->internal);
                 return err;
+        }
 
         return 0;
 }

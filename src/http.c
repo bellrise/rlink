@@ -14,12 +14,12 @@ static int http_close(struct rlink __rl_unused *_self)
         return 0;
 }
 
-ssize_t http_read(struct rlink *_self, void *buf, size_t size)
+static ssize_t http_read(struct rlink *_self, void *buf, size_t size)
 {
         return rlink_read(_self->rl_under, buf, size);
 }
 
-ssize_t http_write(struct rlink *_self, void *buf, size_t size)
+static ssize_t http_write(struct rlink *_self, void *buf, size_t size)
 {
         return rlink_write(_self->rl_under, buf, size);
 }
@@ -43,28 +43,6 @@ int rlink_http(struct rlink_http *self, struct rlink *over_layer,
         return 0;
 }
 
-int lazy_snprintf(char **res, const char *fmt, ...)
-{
-        va_list args;
-        int bufsiz;
-        int siz;
-        char *buf;
-
-        va_start(args, fmt);
-        bufsiz = 0;
-        buf = NULL;
-
-        do {
-                bufsiz += 256;
-                buf = realloc(buf, bufsiz);
-                siz = vsnprintf(buf, bufsiz, fmt, args);
-        } while (siz >= bufsiz);
-
-        va_end(args);
-        *res = buf;
-        return siz;
-}
-
 int rlink_http_putver(struct rlink_http *self, const char *method,
                       const char *path)
 {
@@ -72,9 +50,11 @@ int rlink_http_putver(struct rlink_http *self, const char *method,
         char *line;
         int len;
 
-        len =
-            lazy_snprintf(&line, "%s %s %s\r\n", method, path, self->http_ver);
-        if (link->rl_stream_write(link, line, len) < len)
+        len = asprintf(&line, "%s %s %s\r\n", method, path, self->http_ver);
+        if (len < 0)
+                return ENOMEM;
+
+        if (rlink_write_exact(link, line, len) < len)
                 return errno;
 
         free(line);
@@ -87,8 +67,11 @@ int rlink_http_puthdr(struct rlink_http *self, const char *hdr, const char *val)
         char *line;
         int len;
 
-        len = lazy_snprintf(&line, "%s: %s\r\n", hdr, val);
-        if (link->rl_stream_write(link, line, len) < len)
+        len = asprintf(&line, "%s: %s\r\n", hdr, val);
+        if (len < 0)
+                return ENOMEM;
+
+        if (rlink_write_exact(link, line, len) < len)
                 return errno;
 
         free(line);
@@ -98,16 +81,20 @@ int rlink_http_puthdr(struct rlink_http *self, const char *hdr, const char *val)
 int rlink_http_endhdr(struct rlink_http *self)
 {
         struct rlink *link = self->_self.rl_under;
-        if (link->rl_stream_write(link, "\r\n", 2) < 2)
+        if (rlink_write_exact(link, "\r\n", 2) < 2)
                 return errno;
         return 0;
 }
 
 static int stream_rdline(struct rlink *link, char *line, int limit)
 {
+        ssize_t nread;
+
         for (int i = 0; i < limit; i++) {
-                if (link->rl_stream_read(link, &line[i], 1) != 1)
-                        return errno;
+                nread = link->rl_stream_read(link, &line[i], 1);
+                if (nread != 1)
+                        return ECONNRESET;
+
                 if (i > 0 && line[i - 1] == '\r' && line[i] == '\n') {
                         line[i - 1] = 0;
                         break;
@@ -166,6 +153,7 @@ int rlink_http_gethdr(struct rlink_http *self, struct rlink_http_hdr *hdr)
         p = strchr(hdr->hdr, ':');
         if (!p) {
                 free(hdr->hdr);
+                hdr->hdr = NULL;
                 return EPROTO;
         }
 
@@ -190,6 +178,9 @@ int rlink_http_recvhdrs(struct rlink_http *self, struct rlink_vec *vec)
                         break;
 
                 hdr_copy = malloc(sizeof(hdr));
+                if (hdr_copy == NULL)
+                        return ENOMEM;
+
                 hdr_copy->hdr = hdr.hdr;
                 hdr_copy->val = hdr.val;
                 rlink_vec_put(vec, hdr_copy);
@@ -219,7 +210,7 @@ const char *rlink_http_findhdr(struct rlink_vec *headers, const char *hdr)
         struct rlink_http_hdr *phdr;
         for (int i = 0; i < headers->size; i++) {
                 phdr = headers->elems[i];
-                if (!strcmp(phdr->hdr, hdr))
+                if (!strcasecmp(phdr->hdr, hdr))
                         return phdr->val;
         }
 

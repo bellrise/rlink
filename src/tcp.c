@@ -39,13 +39,17 @@ int rlink_tcp(struct rlink_tcp *self, const char *addr_or_domain, int port)
                 return errno;
 
         memset(&self->rt_addr, 0, sizeof(self->rt_addr));
-        if (rlink_ipv4_resolve(&self->rt_addr.sin_addr, addr_or_domain))
+        if (rlink_ipv4_resolve(&self->rt_addr.sin_addr, addr_or_domain)) {
+                close(self->rt_sock);
                 return EINVAL;
+        }
+
         self->rt_addr.sin_port = htons(port);
         self->rt_addr.sin_family = AF_INET;
 
         if (connect(self->rt_sock, (struct sockaddr *) &self->rt_addr,
                     sizeof(self->rt_addr))) {
+                close(self->rt_sock);
                 return errno;
         }
 

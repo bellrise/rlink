@@ -2,33 +2,33 @@
    Copyright (c) 2025 bellrise */
 
 #ifndef RLINK_H
-#define RLINK_H 1
+# define RLINK_H 1
 
-#include <arpa/inet.h>
-#include <stddef.h>
-#include <unistd.h>
+# include <arpa/inet.h>
+# include <stddef.h>
+# include <unistd.h>
 
-#ifndef __rl_unused
-# define __rl_unused __attribute__((unused))
-#endif
+# ifndef __rl_unused
+#  define __rl_unused __attribute__((unused))
+# endif
 
-#if defined(RLINK_DEBUG)
-# define rlink_debug(...) printf(__VA_ARGS__)
-#else
-# define rlink_debug(...)
-#endif
+# if defined(RLINK_DEBUG)
+#  define rlink_debug(...) printf(__VA_ARGS__)
+# else
+#  define rlink_debug(...)
+# endif
 
 /* Layer types. */
-#define RLT_TCP         401
-#define RLT_UDP         402
-#define RLT_SOCK_STREAM 403
-#define RLT_TLS         501
-#define RLT_HTTP        601
+# define RLT_TCP         401
+# define RLT_UDP         402
+# define RLT_SOCK_STREAM 403
+# define RLT_TLS         501
+# define RLT_HTTP        601
 
 /* Layer flags. */
-#define RLF_STREAM 1 /* Implements rl_stream_read+write */
-#define RLF_SECURE 2 /* Encrypted transport. */
-#define RLF_TFD    4 /* Transparent access to underlying FD. */
+# define RLF_STREAM 1 /* Implements rl_stream_read+write */
+# define RLF_SECURE 2 /* Encrypted transport. */
+# define RLF_TFD    4 /* Transparent access to underlying FD. */
 
 /* Generic layer object. Stores callbacks to the drivers, is usually the first
    element of a defined layer. */
@@ -51,15 +51,17 @@ int rlink_close(struct rlink *);
 ssize_t rlink_read(struct rlink *, void *buf, ssize_t size);
 ssize_t rlink_write(struct rlink *, void *buf, ssize_t size);
 
+ssize_t rlink_write_exact(struct rlink *, void *buf, ssize_t size);
+
 /* Copy the IPv4 address into 'a' or resolve an A record from a fqdn. */
 int rlink_ipv4_resolve(struct in_addr *a, const char *address);
 
-#define rlink_of(LAYER)             ((LAYER)->_self)
-#define rlink_has_flag(RLINK, FLAG) ((RLINK)->rl_flags & (FLAG))
-#define rlink_as_http(RLINK)        ((struct rlink_http *) (RLINK))
-#define rlink_as_sock_stream(RLINK) ((struct rlink_sock_stream *) (RLINK))
-#define rlink_as_tcp(RLINK)         ((struct rlink_tcp *) (RLINK))
-#define rlink_as_tls(RLINK)         ((struct rlink_tls *) (RLINK))
+# define rlink_of(LAYER)             ((LAYER)->_self)
+# define rlink_has_flag(RLINK, FLAG) (((RLINK)->rl_flags & (FLAG)) == (FLAG))
+# define rlink_as_http(RLINK)        ((struct rlink_http *) (RLINK))
+# define rlink_as_sock_stream(RLINK) ((struct rlink_sock_stream *) (RLINK))
+# define rlink_as_tcp(RLINK)         ((struct rlink_tcp *) (RLINK))
+# define rlink_as_tls(RLINK)         ((struct rlink_tls *) (RLINK))
 
 /* Generic vector. */
 struct rlink_vec
@@ -112,7 +114,7 @@ int rlink_tls_client(struct rlink_tls *, struct rlink *over_layer);
 
 /* === HTTP === */
 
-#define RL_HTTP_1_1 0x11 /* HTTP/1.1 */
+# define RL_HTTP_1_1 0x11 /* HTTP/1.1 */
 
 struct rlink_http
 {
